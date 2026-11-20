@@ -1,4 +1,4 @@
-"""Utility meter tracker: readings, tiered billing, spike flags, JSON storage."""
+"""Utility meter tracker: readings, tiered billing, spikes, JSON storage."""
 import json
 import math
 from datetime import datetime
@@ -7,6 +7,7 @@ from datetime import datetime
 meters = {}
 DEFAULT_RATES = (3.5, 5.0, 7.5)
 SPIKE_LIMIT = 500
+
 
 def record_reading(meter_id, units, history=None):
     """Add a reading to a meter and return the reading history list."""
@@ -18,6 +19,7 @@ def record_reading(meter_id, units, history=None):
     meters[meter_id] = meters.get(meter_id, 0) + units
     return history
 
+
 def compute_bill(meter_id, tier_rates):
     """Return the three-tier bill (0-100, 101-300, 301+ units) for a meter."""
     units = meters[meter_id]
@@ -25,16 +27,20 @@ def compute_bill(meter_id, tier_rates):
         return units * tier_rates[0]
     if units <= 300:
         return 100 * tier_rates[0] + (units - 100) * tier_rates[1]
-    return 100 * tier_rates[0] + 200 * tier_rates[1] + (units - 300) * tier_rates[2]
+    return (100 * tier_rates[0] + 200 * tier_rates[1]
+            + (units - 300) * tier_rates[2])
+
 
 def raise_rates(rates, percent):
     """Return a new tuple of tier rates raised by the given percentage."""
     return tuple(rate * (1 + percent / 100) for rate in rates)
 
+
 def flag_spikes():
     """Return the ids of meters whose total exceeds SPIKE_LIMIT."""
     return [meter_id for meter_id, units in meters.items()
             if units > SPIKE_LIMIT]
+
 
 def load_meter_data(file="meters.json"):
     """Replace meter data with the contents of a JSON file ({} if unusable)."""
@@ -46,10 +52,12 @@ def load_meter_data(file="meters.json"):
     meters.clear()
     meters.update(data)
 
+
 def save_meter_data(file="meters.json"):
     """Write the meter data to a JSON file."""
     with open(file, "w", encoding="utf-8") as f:
         json.dump(meters, f)
+
 
 def main():
     """Run the demo."""
@@ -66,7 +74,8 @@ def main():
     print(f"Bill M-01: {compute_bill('M-01', rates):.2f}")
     print(f"Bill M-03: {compute_bill('M-03', rates):.2f}")
     print("Spikes:", flag_spikes())
-    adjustment = input("Extra units for M-01 (Enter for 0): ") or "0"
+    prompt = "Extra units for M-01 (Enter for 0): "
+    adjustment = input(prompt) or "0"
     try:
         record_reading("M-01", float(adjustment), history)
     except ValueError as err:
@@ -75,4 +84,6 @@ def main():
     load_meter_data()
     print(f"Bill M-01 after reload: {compute_bill('M-01', rates):.2f}")
 
-main()
+
+if __name__ == "__main__":
+    main()
