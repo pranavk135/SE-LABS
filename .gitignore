@@ -3,3 +3,8 @@ __pycache__/
 .hypothesis/
 .pytest_cache/
 .coverage
+.venv/
+__pycache__/
+.hypothesis/
+.pytest_cache/
+.coverage
